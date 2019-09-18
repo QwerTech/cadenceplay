@@ -31,7 +31,7 @@ public class GettingStarted {
     }
 
     public static class HelloWorldImpl implements HelloWorld {
-        private final GettingStartedActivities.HelloWorldActivities activities = Workflow.newActivityStub(GettingStartedActivities.HelloWorldActivities.class, );
+        private final GettingStartedActivities.HelloWorldActivities activities = Workflow.newActivityStub(GettingStartedActivities.HelloWorldActivities.class);
         private String greeting = "Hello";
         private int count = 0;
 
