@@ -78,19 +78,17 @@ public class HelloAsyncLambdaTimeLimit {
       // Async.invoke accepts not only activity or child workflow method references
       // but lambda functions as well. Behind the scene it allocates a thread
       // to execute it asynchronously.
-      Promise<String> result = Async.function(() -> {
-        log.info("async STARTED");
-        String s = paymentActivity.makePayment(amount, account);
-        log.info("async FINISHED: {}", s);
-        return s;
-      });
+      log.info("async STARTED");
+      String result = paymentActivity.makePayment(amount, account);
+
+
+      log.info("async FINISHED: {}", result);
+
       String resStr = null;
       try {
         log.info("WF before async");
-        resStr = result.get(ACTIVITY_DURATION_EXTERNAL_SEC, TimeUnit.SECONDS);
+        resStr = result;
         log.info("WF after async");
-      } catch (TimeoutException e) {
-        log.info("WF TimeoutException CATCH");
       } catch (RuntimeException e) {
         log.info("WF RuntimeException CATCH");
       }
@@ -113,11 +111,11 @@ public class HelloAsyncLambdaTimeLimit {
 //      longRunningTask(Duration.ofSeconds(ACTIVITY_DURATION_INTERNAL_SEC));
 
       // 2. Throw some runtime exception, emulation of RestClientException
-      if (counter < EXCEPIONS_COUNT) {
-        counter++;
-        log.info("makePayment EXCEPTION");
-        throw new RuntimeException("RestClientException");
-      }
+//      if (counter < EXCEPIONS_COUNT) {
+//        counter++;
+//        log.info("makePayment EXCEPTION");
+//        throw new RuntimeException("RestClientException");
+//      }
 
       // 3. Random duration task
       //
@@ -168,6 +166,7 @@ public class HelloAsyncLambdaTimeLimit {
     PaymentWorkflow workflow = workflowClient.newWorkflowStub(PaymentWorkflow.class, workflowOptions);
     // Execute a workflow waiting for it to complete.
     String paymentResult = workflow.payment("1000", "3234-0989-0988-0988");
+    System.out.println("Main competed: "+paymentResult);
     // System.exit(0);
   }
 }
