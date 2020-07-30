@@ -22,3 +22,6 @@ docker run --network=host --rm ubercadence/cli:master --do test-domain workflow 
 
 #workflow describe
 docker run --network=host --rm ubercadence/cli:master --do test-domain workflow describe  --workflow_id "HelloActivityWorker"
+
+#workflow describe
+docker run --network=host --rm ubercadence/cli:master --do test-domain workflow start --workflow_id "egarant/HelloActivityWorker" --tl helloWorldGroup --wt main.Workflow --et 60 --dt 10 -i \"World123\"
