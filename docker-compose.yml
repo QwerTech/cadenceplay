@@ -2,6 +2,12 @@ version: '3'
 services:
   cassandra:
     image: cassandra:3.11
+    volumes:
+    - ~/data:/opt/cassandra/data:rw
+    - ~/data1:/var/lib/cassandra/data:rw
+    - ~/data2:/var/lib/cassandra/commitlog:rw
+    - ~/data3:/var/lib/cassandra/saved_caches:rw
+    - ~/data4:/var/lib/cassandra/hints:rw
     ports:
       - "9042:9042"
   statsd:
@@ -12,7 +18,7 @@ services:
       - "8125:8125"
       - "8126:8126"
   cadence:
-    image: ubercadence/server:master-auto-setup
+    image: ubercadence/server:0.11.0-auto-setup
     ports:
      - "7933:7933"
      - "7934:7934"
