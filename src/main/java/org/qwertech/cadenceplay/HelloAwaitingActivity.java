@@ -104,11 +104,13 @@ public class HelloAwaitingActivity {
         Workflow.newActivityStub(GreetingActivities.class);
 
     @Override
+    @SneakyThrows
     public String getGreeting(int orderId, String name) {
       this.id = orderId;
       System.out.println("Start getGreeting - " + orderId);
       // This is a blocking call that returns only after the activity has completed.
       System.out.println("LOCK  order - " + orderId);
+      Thread.sleep(500l);
       Workflow.await(() -> unlock);
       System.out.println("UNLOCK order - " + orderId);
       String res = activities.composeGreeting("Hello", name);

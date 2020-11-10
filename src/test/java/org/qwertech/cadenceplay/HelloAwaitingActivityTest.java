@@ -7,6 +7,8 @@ import com.uber.cadence.client.WorkflowClientOptions;
 import com.uber.cadence.client.WorkflowOptions;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import lombok.SneakyThrows;
 import org.junit.Before;
 import org.junit.Test;
@@ -26,12 +28,23 @@ public class HelloAwaitingActivityTest {
 
   @Test
   @SneakyThrows
-  public void testActivityImpl() {
+  public void testActivityImpl100() {
+    List<AtomicInteger> repeats = new ArrayList<>();
+    for (int i = 0; i < 100; i++) {
+      repeats.add(testActivityImpl());
+    }
+    System.out.println(repeats);
+    System.out.println("Avarage: " + repeats.stream().collect(Collectors.averagingInt(AtomicInteger::get)));
+  }
+
+//  @Test
+  @SneakyThrows
+  public AtomicInteger testActivityImpl() {
     List<HelloAwaitingActivity.GreetingWorkflow> wfs = new ArrayList();
     List<WorkflowExecution> wes = new ArrayList();
     // Get a workflow stub using the same task list the worker uses
     final long nanoTime = System.nanoTime();
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 10; i++) {
       HelloAwaitingActivity.GreetingWorkflow workflow =
           workflowClient
               .newWorkflowStub(HelloAwaitingActivity.GreetingWorkflow.class,
@@ -44,14 +57,22 @@ public class HelloAwaitingActivityTest {
       wes.add(we);
     }
     System.out.println("Number of workflows - " + wfs.size());
-    wfs.parallelStream()
-        .forEach(
-            w -> {
-              w.noopSignal();
-//              w.unlockSignal();
-              System.out.println("query - " + w.queryOrderId());
-            });
+    AtomicInteger count = new AtomicInteger();
+    try {
+      wfs.parallelStream()
+          .forEach(
+              w -> {
+                w.noopSignal();
+                //              w.unlockSignal();
+                System.out.println("query - " + w.queryOrderId());
+                count.incrementAndGet();
+              });
+    } catch (Exception e) {
+
+    }
+
 //    Thread.sleep(20000);
-    System.out.println("END!!!");
+    System.out.println(count + " END!!!");
+    return count;
   }
 }
