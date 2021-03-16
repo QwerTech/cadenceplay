@@ -3,29 +3,28 @@ package org.qwertech.cadenceplay;
 import com.uber.cadence.DomainAlreadyExistsError;
 import com.uber.cadence.RegisterDomainRequest;
 import com.uber.cadence.serviceclient.IWorkflowService;
-import com.uber.cadence.serviceclient.WorkflowServiceTChannel;
+import com.uber.cadence.worker.Worker;
+import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
-import org.apache.thrift.TException;
 
 @UtilityClass
 public class Utils {
 
-  public static IWorkflowService createDomain(String domain) throws TException {
+  public static void createDomainIfNotExists(Worker.Factory factory, String domain) {
+    createDomainIfNotExists(factory.getWorkflowService(), domain);
+  }
 
-    IWorkflowService cadenceService = new WorkflowServiceTChannel();
-    RegisterDomainRequest request = new RegisterDomainRequest();
-    request.setDescription("sample domain");
-    request.setEmitMetric(false);
-    request.setName(domain);
-    int retentionPeriodInDays = 5;
-    request.setWorkflowExecutionRetentionPeriodInDays(retentionPeriodInDays);
+  @SneakyThrows
+  public static void createDomainIfNotExists(IWorkflowService workflowService, String domain) {
+
+    RegisterDomainRequest request = new RegisterDomainRequest()
+        .setDescription("sample domain")
+        .setEmitMetric(false)
+        .setName(domain)
+        .setWorkflowExecutionRetentionPeriodInDays(5);
     try {
-      cadenceService.RegisterDomain(request);
-//      logger.debug("Successfully registered domain {} with retentionDays={}", logger,
-//          retentionPeriodInDays);
-    } catch (DomainAlreadyExistsError e) {
-//      logger.warn("domain  already exists {} {}", TEST_DOMAIN, e);
+      workflowService.RegisterDomain(request);
+    } catch (DomainAlreadyExistsError ignored) {
     }
-    return cadenceService;
   }
 }

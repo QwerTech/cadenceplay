@@ -10,7 +10,6 @@ import com.uber.cadence.workflow.SignalMethod;
 import com.uber.cadence.workflow.Workflow;
 import com.uber.cadence.workflow.WorkflowMethod;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.SneakyThrows;
@@ -28,8 +27,8 @@ public class CadenceExceptions {
   @SneakyThrows
   public static void main(String[] args) {
 
-    Utils.createDomain(TEST_DOMAIN);
     Worker.Factory factory = new Worker.Factory(TEST_DOMAIN);
+    Utils.createDomainIfNotExists(factory, TEST_DOMAIN);
     Worker worker = factory.newWorker(TASK_LIST);
     worker.registerWorkflowImplementationTypes(LongWorkflowImpl.class);
     WorkflowClient workflowClient = WorkflowClient.newInstance(TEST_DOMAIN);
@@ -41,11 +40,32 @@ public class CadenceExceptions {
     WorkflowOptions options = new Builder(WORKFLOW_OPTIONS).setWorkflowId(longWorkflowId).build();
     LongWorkflow realWorkflow = workflowClient.newWorkflowStub(LongWorkflow.class, options);
 
-    CompletableFuture<String> result = WorkflowClient.execute(realWorkflow::startLongProcess);
+    WorkflowClient.start(realWorkflow::startLongProcess);
     LongWorkflow stub = workflowClient.newWorkflowStub(LongWorkflow.class, longWorkflowId);
     stub.update("123");
     stub.getState();
     System.out.println("Bye!");
+  }
+
+  public interface ConnectorActivity {
+
+    @ActivityMethod(scheduleToCloseTimeoutSeconds = 3)
+    SomeState getState(String longWorkflowId);
+
+    @ActivityMethod(scheduleToCloseTimeoutSeconds = 3)
+    void updateState(String longWorkflowId, String someNewData);
+  }
+
+  public interface LongWorkflow {
+
+    @WorkflowMethod(executionStartToCloseTimeoutSeconds = 60)
+    String startLongProcess();
+
+    @SignalMethod
+    void update(String someNewData);
+
+    @QueryMethod
+    SomeState getState();
   }
 
   public static class LongWorkflowImpl implements LongWorkflow {
@@ -74,15 +94,6 @@ public class CadenceExceptions {
     }
   }
 
-  public interface ConnectorActivity {
-
-    @ActivityMethod(scheduleToCloseTimeoutSeconds = 3)
-    SomeState getState(String longWorkflowId);
-
-    @ActivityMethod(scheduleToCloseTimeoutSeconds = 3)
-    void updateState(String longWorkflowId, String someNewData);
-  }
-
   @AllArgsConstructor
   public static class ConnectorActivityImpl implements ConnectorActivity {
 
@@ -102,17 +113,5 @@ public class CadenceExceptions {
   public static class SomeState {
 
     private String someData;
-  }
-
-  public interface LongWorkflow {
-
-    @WorkflowMethod(executionStartToCloseTimeoutSeconds = 60)
-    String startLongProcess();
-
-    @SignalMethod
-    void update(String someNewData);
-
-    @QueryMethod
-    SomeState getState();
   }
 }
